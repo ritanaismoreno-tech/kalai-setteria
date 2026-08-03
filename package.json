@@ -1,0 +1,45 @@
+{
+  "name": "pablo-rojo-setter-ia",
+  "version": "1.0.0",
+  "description": "AI setter backend connecting WhatsApp/Instagram (Meta) to Claude",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "dev:db": "node scripts/dev-postgres.mjs",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "pg": "^8.22.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.2",
+    "@types/pg": "^8.20.3",
+    "drizzle-kit": "^0.31.10",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "tsx": "^4.23.5",
+    "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "@embedded-postgres/darwin-x64@18.4.0-beta.17": true,
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
+  }
+}
