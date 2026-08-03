@@ -25,6 +25,13 @@ export const messageDirectionEnum = pgEnum("message_direction", [
   "inbound",
   "outbound",
 ]);
+export const conversationStageEnum = pgEnum("conversation_stage", [
+  "nuevos",
+  "conversacion",
+  "cualificados",
+  "agendados",
+  "perdidos",
+]);
 
 export const systemPrompts = pgTable("system_prompts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -67,6 +74,7 @@ export const conversations = pgTable("conversations", {
     .references(() => contacts.id),
   platform: platformEnum("platform").notNull(),
   status: conversationStatusEnum("status").notNull().default("active"),
+  stage: conversationStageEnum("stage").notNull().default("nuevos"),
   pausedAt: timestamp("paused_at", { withTimezone: true }),
   pausedBy: text("paused_by"),
   lastMessageAt: timestamp("last_message_at", { withTimezone: true }),

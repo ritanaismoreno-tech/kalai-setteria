@@ -199,3 +199,26 @@ export async function setConversationPaused(
     })
     .where(eq(conversations.id, conversationId));
 }
+
+const VALID_STAGES = [
+  "nuevos",
+  "conversacion",
+  "cualificados",
+  "agendados",
+  "perdidos",
+] as const;
+export type ConversationStage = (typeof VALID_STAGES)[number];
+
+export function isValidStage(value: unknown): value is ConversationStage {
+  return typeof value === "string" && (VALID_STAGES as readonly string[]).includes(value);
+}
+
+export async function setConversationStage(
+  conversationId: string,
+  stage: ConversationStage,
+): Promise<void> {
+  await db
+    .update(conversations)
+    .set({ stage, updatedAt: new Date() })
+    .where(eq(conversations.id, conversationId));
+}

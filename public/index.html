@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SetterIA · Pablo Rojo</title>
+<style>
+  @font-face { font-family: "Fraunces Var"; src: url("/fonts/fraunces-var.woff2") format("woff2-variations"), url("/fonts/fraunces-var.woff2") format("woff2"); font-weight: 350 700; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("/fonts/karla-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("/fonts/karla-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("/fonts/karla-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+  :root {
+    --ground: #17181b; --surface: #1e2023; --surface-raised: #262930; --surface-hover: #2f333b;
+    --border: #363b44; --border-soft: #262a31;
+    --accent: #8ca3c4; --accent-strong: #a6b8d6; --accent-soft: rgba(140,163,196,.14); --accent-ink: #10151c;
+    --text-primary: #ececee; --text-secondary: #a6abb3; --text-tertiary: #74787f;
+    --success: #7fb07a; --success-soft: rgba(127,176,122,.16);
+    --warning: #e0a94e; --warning-soft: rgba(224,169,78,.16);
+    --critical: #e0716a; --critical-soft: rgba(224,113,106,.16);
+    --stage-sand: #c9a26b; --stage-sage: #8aae8a; --stage-dusk: #8ca3c4; --stage-cual: #cf9457;
+    --wa: #6fce8a; --ig: #d97fb0;
+    --shadow-drawer: -24px 0 60px rgba(6,7,9,.45); --shadow-card: 0 1px 2px rgba(6,7,9,.3);
+    --radius-md: 10px; --radius-lg: 16px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --ground:#f4f3f1;--surface:#fff;--surface-raised:#f8f7f5;--surface-hover:#efeeeb;--border:#dedcd8;--border-soft:#eae8e4;--accent:#4c6690;--accent-strong:#3b5279;--accent-soft:rgba(76,102,144,.1);--accent-ink:#fff;--text-primary:#232426;--text-secondary:#5b5e63;--text-tertiary:#8b8e93;--success:#4c8a49;--success-soft:rgba(76,138,73,.12);--warning:#b9822a;--warning-soft:rgba(185,130,42,.12);--critical:#c2504a;--critical-soft:rgba(194,80,74,.12);--stage-sand:#a9793b;--stage-sage:#5c8a5c;--stage-dusk:#4c6690;--stage-cual:#b06a2e;--shadow-drawer:-24px 0 60px rgba(40,38,34,.12);--shadow-card:0 1px 2px rgba(40,38,34,.08); }
+  }
+  :root[data-theme="dark"] { --ground:#17181b;--surface:#1e2023;--surface-raised:#262930;--surface-hover:#2f333b;--border:#363b44;--border-soft:#262a31;--accent:#8ca3c4;--accent-strong:#a6b8d6;--accent-soft:rgba(140,163,196,.14);--accent-ink:#10151c;--text-primary:#ececee;--text-secondary:#a6abb3;--text-tertiary:#74787f;--success:#7fb07a;--success-soft:rgba(127,176,122,.16);--warning:#e0a94e;--warning-soft:rgba(224,169,78,.16);--critical:#e0716a;--critical-soft:rgba(224,113,106,.16);--stage-sand:#c9a26b;--stage-sage:#8aae8a;--stage-dusk:#8ca3c4;--stage-cual:#cf9457;--shadow-drawer:-24px 0 60px rgba(6,7,9,.45);--shadow-card:0 1px 2px rgba(6,7,9,.3); }
+  :root[data-theme="light"] { --ground:#f4f3f1;--surface:#fff;--surface-raised:#f8f7f5;--surface-hover:#efeeeb;--border:#dedcd8;--border-soft:#eae8e4;--accent:#4c6690;--accent-strong:#3b5279;--accent-soft:rgba(76,102,144,.1);--accent-ink:#fff;--text-primary:#232426;--text-secondary:#5b5e63;--text-tertiary:#8b8e93;--success:#4c8a49;--success-soft:rgba(76,138,73,.12);--warning:#b9822a;--warning-soft:rgba(185,130,42,.12);--critical:#c2504a;--critical-soft:rgba(194,80,74,.12);--stage-sand:#a9793b;--stage-sage:#5c8a5c;--stage-dusk:#4c6690;--stage-cual:#b06a2e;--shadow-drawer:-24px 0 60px rgba(40,38,34,.12);--shadow-card:0 1px 2px rgba(40,38,34,.08); }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { background: var(--ground); color: var(--text-primary); font-family: "Karla", ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+  .hidden { display: none !important; }
+
+  /* ---- Login ---- */
+  #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 30px; width: min(380px, 100%); box-shadow: var(--shadow-card); }
+  .login-card h1 { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 22px; margin: 0 0 4px; }
+  .login-card p { color: var(--text-secondary); font-size: 13px; margin: 0 0 20px; }
+  .login-card input { width: 100%; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; font-size: 14px; padding: 11px 12px; margin-bottom: 12px; }
+  .login-card button { width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 14px; padding: 11px; cursor: pointer; }
+  .login-error { color: var(--critical); font-size: 12.5px; margin-top: 10px; display: none; }
+
+  /* ---- App shell ---- */
+  #app-screen { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand-mark { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 20px; }
+  .brand-sub { font-size: 12px; color: var(--text-tertiary); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .btn { font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-raised); color: var(--text-primary); cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-soft); border-bottom: 1px solid var(--border); }
+  .stat { background: var(--surface); padding: 13px 24px; }
+  .stat-value { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 11.5px; color: var(--text-tertiary); font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
+
+  .board-wrap { flex: 1; overflow: hidden; display: flex; }
+  .board { display: flex; gap: 14px; padding: 18px 24px; overflow-x: auto; overflow-y: hidden; align-items: flex-start; width: 100%; }
+  .column { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 272px; flex-shrink: 0; max-height: 100%; display: flex; flex-direction: column; }
+  .column-head { display: flex; align-items: center; gap: 9px; padding: 13px 14px 11px; border-bottom: 1px solid var(--border-soft); }
+  .stage-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .column-title { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 14px; flex: 1; }
+  .column-count { font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); background: var(--surface-raised); border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+  .cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 40px; }
+  .empty-col { padding: 14px 10px; text-align: center; color: var(--text-tertiary); font-size: 12px; }
+
+  .lead-card { text-align: left; background: var(--surface-raised); border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 10px 11px; cursor: pointer; color: inherit; display: flex; flex-direction: column; gap: 7px; box-shadow: var(--shadow-card); width: 100%; }
+  .lead-card:hover { border-color: var(--accent); }
+  .lead-top { display: flex; align-items: center; gap: 8px; }
+  .lead-name { font-weight: 700; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lead-time { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .lead-preview { font-size: 12.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .lead-meta { display: flex; align-items: center; gap: 6px; }
+  .pill { font-size: 10.5px; font-weight: 700; padding: 2.5px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; }
+  .pill.active { background: var(--success-soft); color: var(--success); }
+  .pill.paused { background: var(--warning-soft); color: var(--warning); }
+  .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.wa { background: var(--wa); } .dot.ig { background: var(--ig); }
+
+  .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--text-tertiary); padding: 40px; text-align: center; }
+  .empty-state h2 { font-family: "Fraunces Var", serif; font-weight: 600; color: var(--text-primary); margin: 0; font-size: 18px; }
+
+  /* ---- Drawer ---- */
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(6,7,9,.4); opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 20; }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(720px, 94vw); background: var(--ground); border-left: 1px solid var(--border); box-shadow: var(--shadow-drawer); transform: translateX(100%); transition: transform .28s cubic-bezier(.2,.8,.2,1); z-index: 21; display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .drawer-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .drawer-title { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 16px; }
+  .drawer-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+  .drawer-close { margin-left: auto; background: var(--surface-raised); border: 1px solid var(--border); color: var(--text-secondary); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+  .drawer-close:hover { color: var(--text-primary); border-color: var(--accent); }
+  .drawer-main { flex: 1; display: grid; grid-template-columns: 1fr 230px; overflow: hidden; }
+  .thread { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 84%; display: flex; flex-direction: column; gap: 3px; }
+  .msg.inbound { align-self: flex-start; } .msg.outbound { align-self: flex-end; align-items: flex-end; }
+  .bubble { padding: 9px 12px; border-radius: 14px; font-size: 13.5px; line-height: 1.45; }
+  .msg.inbound .bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .msg.outbound .bubble { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+  .msg-time { font-size: 10.5px; color: var(--text-tertiary); padding: 0 3px; }
+  .control-panel { border-left: 1px solid var(--border); background: var(--surface); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
+  .panel-title { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 9px; }
+  .ia-toggle { display: flex; align-items: center; justify-content: space-between; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 12px; }
+  .ia-toggle-label { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-dot.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+  .status-dot.off { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+  .switch { width: 36px; height: 21px; border-radius: 999px; background: var(--border); position: relative; cursor: pointer; flex-shrink: 0; border: none; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%; background: var(--text-primary); transition: transform .15s ease; }
+  .switch.on { background: var(--success); } .switch.on::after { transform: translateX(15px); }
+  select.stage-select { width: 100%; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; font-size: 13px; padding: 9px 10px; }
+  .field-row { margin-bottom: 10px; }
+  .field-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; display: block; margin-bottom: 2px; }
+  .field-value { font-size: 13px; color: var(--text-secondary); }
+  .loading-note { padding: 16px; color: var(--text-tertiary); font-size: 12.5px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+  .tab { border: none; background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+  .tab:hover:not([aria-selected="true"]) { color: var(--text-primary); }
+
+  .view-scroll { flex: 1; overflow-y: auto; }
+  .view-inner { max-width: 820px; margin: 0 auto; padding: 28px 24px 60px; }
+  .view-head h1 { font-family: "Fraunces Var", serif; font-weight: 600; font-size: 22px; margin: 0 0 6px; }
+  .view-head p { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 22px; max-width: 62ch; }
+
+  .soon-box { border: 1px dashed var(--border); border-radius: var(--radius-lg); padding: 34px 20px; text-align: center; color: var(--text-tertiary); }
+  .soon-box strong { display: block; color: var(--text-primary); font-family: "Fraunces Var", serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+
+  .conn-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 15px 17px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+  .conn-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; background: var(--surface-raised); color: var(--text-tertiary); }
+  .conn-body { flex: 1; }
+  .conn-name { font-weight: 700; font-size: 13.5px; }
+  .conn-detail { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+  .conn-status { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; flex-shrink: 0; }
+  .conn-status.connected { background: var(--success-soft); color: var(--success); }
+  .conn-status.missing { background: var(--warning-soft); color: var(--warning); }
+  .conn-status.soon { background: var(--surface-raised); color: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <h1>SetterIA</h1>
+    <p>Panel de Pablo Rojo — ingresa el token de acceso.</p>
+    <input type="password" id="login-token" placeholder="Token de acceso" autocomplete="off" />
+    <button id="login-btn">Entrar</button>
+    <div class="login-error" id="login-error">Token incorrecto.</div>
+  </div>
+</div>
+
+<div id="app-screen" class="hidden">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">SetterIA</span><span class="brand-sub">Pablo Rojo</span></div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-view="board">Pipeline</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="tags">Etiquetas</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="connections">Conexiones</button>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="btn" id="refresh-btn">↻ Actualizar</button>
+      <button class="btn" id="logout-btn">Salir</button>
+    </div>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <main class="board-wrap" id="board-view"><div class="board" id="board"></div></main>
+
+  <main class="view-scroll hidden" id="tags-view">
+    <div class="view-inner">
+      <div class="view-head">
+        <h1>Etiquetas</h1>
+        <p>Reglas automáticas para etiquetar y mover conversaciones según lo que escriba el lead (o tú). Todavía no está construido — aquí vivirá una vez esté listo.</p>
+      </div>
+      <div class="soon-box"><strong>Próximamente</strong>Aún no hay etiquetas configuradas.</div>
+    </div>
+  </main>
+
+  <main class="view-scroll hidden" id="connections-view">
+    <div class="view-inner">
+      <div class="view-head">
+        <h1>Conexiones</h1>
+        <p>Estado real de las cuentas conectadas a este backend.</p>
+      </div>
+      <div id="connections-list"><div class="loading-note">Cargando…</div></div>
+    </div>
+  </main>
+</div>
+
+<div class="drawer-overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-avatar" id="d-avatar">–</div>
+    <div><div class="drawer-title" id="d-name">—</div><div class="drawer-subtitle" id="d-subtitle">—</div></div>
+    <button class="drawer-close" id="d-close" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="drawer-main">
+    <div class="thread" id="d-thread"><div class="loading-note">Cargando…</div></div>
+    <div class="control-panel">
+      <div>
+        <div class="panel-title">Control de la IA</div>
+        <div class="ia-toggle">
+          <div class="ia-toggle-label"><span class="status-dot on" id="d-status-dot"></span><span id="d-status-label">IA activa</span></div>
+          <button class="switch on" id="d-switch" aria-label="Pausar o reanudar la IA"></button>
+        </div>
+      </div>
+      <div>
+        <div class="panel-title">Etapa</div>
+        <select class="stage-select" id="d-stage">
+          <option value="nuevos">Nuevos leads</option>
+          <option value="conversacion">En conversación</option>
+          <option value="cualificados">Cualificados</option>
+          <option value="agendados">Agendados</option>
+          <option value="perdidos">Perdidos / sin respuesta</option>
+        </select>
+      </div>
+      <div>
+        <div class="panel-title">Contacto</div>
+        <div class="field-row"><span class="field-label">Canal</span><span class="field-value" id="d-channel">—</span></div>
+        <div class="field-row"><span class="field-label">Último mensaje</span><span class="field-value" id="d-last">—</span></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script src="/app.js"></script>
+</body>
+</html>
