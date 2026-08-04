@@ -7,6 +7,11 @@ import {
   setConversationPaused,
   setConversationStage,
 } from "../services/conversation.service.js";
+import {
+  applyTagToConversation,
+  getTagsForConversations,
+  removeTagFromConversation,
+} from "../services/tag.service.js";
 import { requireAdminToken } from "./auth.middleware.js";
 
 export const adminConversationRouter = Router();
@@ -28,7 +33,10 @@ adminConversationRouter.get("/", async (_req, res) => {
     .innerJoin(contacts, eq(conversations.contactId, contacts.id))
     .orderBy(desc(conversations.lastMessageAt));
 
-  res.json(rows);
+  const tagsByConversation = await getTagsForConversations(rows.map((r) => r.id));
+  const withTags = rows.map((r) => ({ ...r, tags: tagsByConversation[r.id] ?? [] }));
+
+  res.json(withTags);
 });
 
 adminConversationRouter.get("/:id/messages", async (req, res) => {
@@ -58,5 +66,20 @@ adminConversationRouter.patch("/:id/stage", async (req, res) => {
     return;
   }
   await setConversationStage(req.params.id, stage);
+  res.sendStatus(204);
+});
+
+adminConversationRouter.post("/:id/tags", async (req, res) => {
+  const tagId = req.body?.tagId;
+  if (typeof tagId !== "string" || tagId.trim().length === 0) {
+    res.status(400).json({ error: "tagId is required" });
+    return;
+  }
+  await applyTagToConversation(req.params.id, tagId);
+  res.sendStatus(204);
+});
+
+adminConversationRouter.delete("/:id/tags/:tagId", async (req, res) => {
+  await removeTagFromConversation(req.params.id, req.params.tagId);
   res.sendStatus(204);
 });

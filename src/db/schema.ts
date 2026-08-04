@@ -106,6 +106,36 @@ export const messages = pgTable("messages", {
     .defaultNow(),
 });
 
+export const tags = pgTable("tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const conversationTags = pgTable(
+  "conversation_tags",
+  {
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tags.id),
+    appliedAt: timestamp("applied_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("conversation_tags_pair_idx").on(
+      table.conversationId,
+      table.tagId,
+    ),
+  ],
+);
+
 export const processedWebhookEvents = pgTable(
   "processed_webhook_events",
   {

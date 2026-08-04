@@ -14,10 +14,14 @@ function applyClockTheme() {
 applyClockTheme();
 setInterval(applyClockTheme, 60000);
 
+const TAG_COLORS = ["#6fb17a", "#d16a63", "#cf9457", "#d0b64f", "#63b79a", "#5aa3ad", "#7091c9", "#9884c9", "#c887ac", "#8a8f97"];
+
 const TOKEN_KEY = "setteria_admin_token";
 let token = localStorage.getItem(TOKEN_KEY);
 let conversationsCache = [];
+let tagsCache = [];
 let currentDrawerId = null;
+let selectedNewTagColor = TAG_COLORS[0];
 
 const loginScreen = document.getElementById("login-screen");
 const appScreen = document.getElementById("app-screen");
@@ -51,6 +55,7 @@ function showApp() {
   loginScreen.classList.add("hidden");
   appScreen.classList.remove("hidden");
   loadBoard();
+  loadTags();
 }
 
 async function tryLogin(candidateToken) {
@@ -163,6 +168,9 @@ function renderBoard() {
         const card = document.createElement("button");
         card.className = "lead-card";
         const name = c.contactDisplayName || c.contactExternalId;
+        const tagChips = (c.tags || [])
+          .map((t) => `<span class="tag-chip" style="background:${t.color}">${escapeHtml(t.name)}</span>`)
+          .join("");
         card.innerHTML = `
           <div class="lead-top">
             <span class="lead-name">${name}</span>
@@ -171,7 +179,8 @@ function renderBoard() {
           <div class="lead-meta">
             <span class="pill ${c.status === "paused" ? "paused" : "active"}"><span class="pill-dot"></span>${c.status === "paused" ? "IA pausada" : "IA activa"}</span>
             <span class="dot ${c.platform}"></span>
-          </div>`;
+          </div>
+          ${tagChips ? `<div class="tag-list">${tagChips}</div>` : ""}`;
         card.addEventListener("click", () => openDrawer(c.id));
         cardsWrap.appendChild(card);
       });
@@ -195,6 +204,7 @@ async function openDrawer(id) {
   document.getElementById("d-channel").textContent = (conv.platform === "whatsapp" ? "WhatsApp · " : "Instagram · ") + conv.contactExternalId;
   document.getElementById("d-last").textContent = timeAgo(conv.lastMessageAt);
   document.getElementById("d-stage").value = conv.stage;
+  renderDrawerTags(conv);
 
   const isActive = conv.status !== "paused";
   document.getElementById("d-status-dot").className = "status-dot " + (isActive ? "on" : "off");
@@ -260,6 +270,95 @@ document.getElementById("d-stage").addEventListener("change", async function () 
   loadBoard();
 });
 
+function renderDrawerTags(conv) {
+  const wrap = document.getElementById("d-tags");
+  const appliedIds = new Set((conv.tags || []).map((t) => t.id));
+
+  wrap.innerHTML = (conv.tags || []).length
+    ? conv.tags
+        .map(
+          (t) =>
+            `<span class="tag-chip" style="background:${t.color}">${escapeHtml(t.name)}<button data-tag-id="${t.id}" title="Quitar">✕</button></span>`,
+        )
+        .join("")
+    : `<span class="tag-empty">Sin etiquetas</span>`;
+
+  wrap.querySelectorAll("button[data-tag-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await api(`/admin/conversations/${currentDrawerId}/tags/${btn.getAttribute("data-tag-id")}`, {
+        method: "DELETE",
+      });
+      await loadBoard();
+      const updated = conversationsCache.find((c) => c.id === currentDrawerId);
+      if (updated) renderDrawerTags(updated);
+    });
+  });
+
+  const addSelect = document.getElementById("d-tag-add");
+  const available = tagsCache.filter((t) => !appliedIds.has(t.id));
+  addSelect.innerHTML =
+    `<option value="">+ Agregar etiqueta…</option>` +
+    available.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+}
+
+document.getElementById("d-tag-add").addEventListener("change", async function () {
+  if (!currentDrawerId || !this.value) return;
+  await api(`/admin/conversations/${currentDrawerId}/tags`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tagId: this.value }),
+  });
+  this.value = "";
+  await loadBoard();
+  const updated = conversationsCache.find((c) => c.id === currentDrawerId);
+  if (updated) renderDrawerTags(updated);
+});
+
+async function loadTags() {
+  const res = await api("/admin/tags");
+  tagsCache = await res.json();
+  renderTagGrid();
+}
+
+function renderTagGrid() {
+  const grid = document.getElementById("tag-grid");
+  grid.innerHTML = tagsCache.length
+    ? tagsCache
+        .map(
+          (t) =>
+            `<div class="tag-card"><span class="tag-swatch" style="background:${t.color}"></span><span class="tag-card-name">${escapeHtml(t.name)}</span></div>`,
+        )
+        .join("")
+    : `<div class="tag-empty">Aún no has creado ninguna etiqueta.</div>`;
+}
+
+function renderNewTagSwatches() {
+  const wrap = document.getElementById("new-tag-swatches");
+  wrap.innerHTML = TAG_COLORS.map(
+    (c) => `<div class="swatch ${c === selectedNewTagColor ? "selected" : ""}" data-color="${c}" style="background:${c}"></div>`,
+  ).join("");
+  wrap.querySelectorAll(".swatch").forEach((sw) => {
+    sw.addEventListener("click", () => {
+      selectedNewTagColor = sw.getAttribute("data-color");
+      renderNewTagSwatches();
+    });
+  });
+}
+renderNewTagSwatches();
+
+document.getElementById("new-tag-submit").addEventListener("click", async () => {
+  const input = document.getElementById("new-tag-name");
+  const name = input.value.trim();
+  if (!name) return;
+  await api("/admin/tags", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, color: selectedNewTagColor }),
+  });
+  input.value = "";
+  await loadTags();
+});
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", "false"));
@@ -270,6 +369,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.getElementById("tags-view").classList.toggle("hidden", view !== "tags");
     document.getElementById("connections-view").classList.toggle("hidden", view !== "connections");
     if (view === "connections") loadConnections();
+    if (view === "tags") loadTags();
   });
 });
 

@@ -15,6 +15,13 @@
       "when": 1785793309035,
       "tag": "0001_dashing_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785829607254,
+      "tag": "0002_first_the_enforcers",
+      "breakpoints": true
     }
   ]
 }

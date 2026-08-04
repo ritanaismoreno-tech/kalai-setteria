@@ -8,6 +8,7 @@ import { whatsappRouter } from "./webhooks/whatsapp.controller.js";
 import { adminConversationRouter } from "./admin/conversation.controller.js";
 import { adminSystemPromptRouter } from "./admin/systemPrompt.controller.js";
 import { adminConnectionsRouter } from "./admin/connections.controller.js";
+import { adminTagRouter } from "./admin/tag.controller.js";
 import { startFollowUpScheduler } from "./services/followUp.service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,6 +36,7 @@ app.use("/webhooks/whatsapp", whatsappRouter);
 app.use("/admin/conversations", adminConversationRouter);
 app.use("/admin/system-prompt", adminSystemPromptRouter);
 app.use("/admin/connections", adminConnectionsRouter);
+app.use("/admin/tags", adminTagRouter);
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   req.log?.error({ err }, "Unhandled error");
