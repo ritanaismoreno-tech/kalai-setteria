@@ -133,8 +133,12 @@ async function openChat(conversationId) {
   const lead = state.conversations.find((c) => c.id === conversationId);
   if (!lead) return;
 
+  const displayName = lead.contact.displayName || lead.contact.phoneNumber || lead.contact.externalId;
+
+  $("#chat-backdrop").hidden = false;
   $("#chat-panel").hidden = false;
-  $("#chat-contact-name").textContent = lead.contact.displayName || lead.contact.phoneNumber || lead.contact.externalId;
+  $("#chat-avatar").textContent = displayName.trim().slice(0, 1) || "?";
+  $("#chat-contact-name").textContent = displayName;
   $("#chat-contact-meta").textContent = `${lead.platform === "whatsapp" ? "WhatsApp" : "Instagram"} · ${lead.contact.phoneNumber || lead.contact.externalId}`;
   $("#chat-stage-select").value = lead.stage;
   $("#chat-pause-btn").textContent = lead.status === "paused" ? "Reanudar IA" : "Pausar IA";
@@ -148,11 +152,17 @@ async function openChat(conversationId) {
   messagesEl.innerHTML = messages
     .map((m) => {
       const bubbleClass = m.role === "assistant" ? "msg-assistant" : "msg-user";
-      const time = new Date(m.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-      return `<div class="msg-bubble ${bubbleClass}">${escapeHtml(m.content)}<div class="msg-time">${time}</div></div>`;
+      const time = new Date(m.createdAt).toLocaleString("es-ES", { hour: "2-digit", minute: "2-digit" });
+      return `<div class="msg-bubble ${bubbleClass}"><div class="msg-body"><span class="msg-text">${escapeHtml(m.content)}</span><span class="msg-time">${time}</span></div></div>`;
     })
     .join("");
   messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function closeChat() {
+  $("#chat-panel").hidden = true;
+  $("#chat-backdrop").hidden = true;
+  state.selectedConversationId = null;
 }
 
 function renderChatTags(tags) {
@@ -271,10 +281,8 @@ function setupEvents() {
     if (e.key === "Enter") $("#login-btn").click();
   });
   $("#logout-btn").addEventListener("click", logout);
-  $("#chat-close-btn").addEventListener("click", () => {
-    $("#chat-panel").hidden = true;
-    state.selectedConversationId = null;
-  });
+  $("#chat-close-btn").addEventListener("click", closeChat);
+  $("#chat-backdrop").addEventListener("click", closeChat);
 
   $("#chat-pause-btn").addEventListener("click", async () => {
     const isPaused = $("#chat-pause-btn").dataset.paused === "1";

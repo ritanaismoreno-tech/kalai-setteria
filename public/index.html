@@ -55,18 +55,22 @@
     <div class="connections-grid" id="connections-list"></div>
   </main>
 
-  <!-- Panel lateral de conversación -->
+  <!-- Fondo oscurecido detrás de la conversación -->
+  <div id="chat-backdrop" class="chat-backdrop" hidden></div>
+
+  <!-- Vista de conversación, estilo WhatsApp -->
   <aside id="chat-panel" class="chat-panel" hidden>
     <div class="chat-header">
-      <div>
+      <button id="chat-close-btn" class="btn btn-ghost btn-icon chat-back-btn" title="Volver al pipeline">←</button>
+      <div class="chat-avatar" id="chat-avatar">—</div>
+      <div class="chat-header-info">
         <div class="chat-contact-name" id="chat-contact-name">—</div>
         <div class="chat-contact-meta" id="chat-contact-meta">—</div>
       </div>
-      <button id="chat-close-btn" class="btn btn-ghost btn-icon" title="Cerrar">✕</button>
+      <button id="chat-pause-btn" class="btn btn-secondary chat-pause-btn">Pausar IA</button>
     </div>
 
-    <div class="chat-controls">
-      <button id="chat-pause-btn" class="btn btn-secondary">Pausar IA</button>
+    <div class="chat-toolbar">
       <select id="chat-stage-select" class="select">
         <option value="nuevos">Nuevos</option>
         <option value="conversacion">Conversación</option>
@@ -74,13 +78,12 @@
         <option value="agendados">Agendados</option>
         <option value="perdidos">Perdidos</option>
       </select>
-    </div>
-
-    <div class="chat-tags" id="chat-tags"></div>
-    <div class="chat-tags-add">
-      <select id="chat-tag-select" class="select"></select>
-      <button id="chat-tag-add-btn" class="btn btn-secondary btn-small">+ Etiqueta</button>
-      <button id="chat-tag-new-btn" class="btn btn-ghost btn-small">Nueva…</button>
+      <div class="chat-tags" id="chat-tags"></div>
+      <div class="chat-tags-add">
+        <select id="chat-tag-select" class="select"></select>
+        <button id="chat-tag-add-btn" class="btn btn-secondary btn-small">+ Etiqueta</button>
+        <button id="chat-tag-new-btn" class="btn btn-ghost btn-small">Nueva…</button>
+      </div>
     </div>
 
     <div class="chat-messages" id="chat-messages"></div>
