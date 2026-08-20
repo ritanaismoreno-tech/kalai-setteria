@@ -54,44 +54,65 @@ producto.
 La carpeta llegó con `docs/`, `HANDOFF.md`, `render.yaml` y las migraciones
 SQL, pero sin el código fuente. Se reconstruyó todo siguiendo `docs/plan.md`,
 usando el esquema de las migraciones existentes como fuente de verdad (así
-encajó sin fricción con la base de datos de Neon ya en producción). Backend
-desplegado previamente en https://pablo-rojo-setter-ia.onrender.com (Render
-free + Neon free) — ese despliegue quedó con el código viejo (Pablo Rojo
-hardcodeado, credenciales en env vars); **hace falta un nuevo deploy para
-que refleje todo lo construido desde entonces**.
+encajó sin fricción con la base de datos de Neon ya en producción).
+
+## Desplegado (2026-08-20)
+Repo reconectado (`gh` ya estaba autenticado como `ritanaismoreno-tech` en
+esta máquina, no hizo falta la llave SSH de despliegue de la sesión
+original). Se clonó el repo, se sincronizó el código local encima
+(preservando el historial de git — commit normal, sin force push), y se
+subió a `main`. Render tenía auto-deploy activo: el primer intento falló
+porque faltaba `CREDENTIALS_ENCRYPTION_KEY` (esperado, ver validación en
+`env.ts`); se añadió la variable en el dashboard de Render, se limpiaron las
+env vars viejas que ya no se usan (`META_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`,
+`WHATSAPP_PHONE_NUMBER_ID`, `ANTHROPIC_API_KEY`, `META_WEBHOOK_VERIFY_TOKEN`),
+y el redeploy manual quedó **live**. Verificado desde fuera:
+`https://pablo-rojo-setter-ia.onrender.com/health` responde `{"ok":true}`
+(la respuesta del código nuevo) y `/admin/onboarding/config` exige token
+correctamente. Las migraciones (incluidas `program_config`,
+`training_conversation_batches`, `training_messages`, `credentials`) se
+aplicaron solas contra la Neon de producción como parte del `startCommand`
+de `render.yaml`.
+
+**Nota de diseño pendiente**: el repo de GitHub tenía una versión del
+dashboard visualmente más pulida (tipografía propia Fraunces/Karla, paleta
+más refinada, ver `public/fonts/` que sigue en el repo aunque hoy no se usa)
+de la sesión original — se priorizó subir la funcionalidad nueva (onboarding
++ conexiones self-serve) sobre ese pulido visual. Pendiente si se quiere
+retomar: portar el diseño visual viejo sobre la funcionalidad nueva.
 
 ## Pendiente real (actualizado 2026-08-20)
-1. **Reconectar este repo con GitHub y desplegar** — el repo local no tiene
-   remoto de git configurado (la deploy key vivía en la otra máquina), y el
-   despliegue en Render sigue teniendo el código de antes del pivote a
-   producto genérico. Sin este paso nada de lo construido en las últimas
-   sesiones está en producción.
-2. Instagram (Fase B) — no construido aún, solo WhatsApp.
-3. Motor de reglas automáticas para etiquetas (ahora son 100% manuales).
-4. Autenticación por cuenta — hoy admin es un token compartido único
+1. Instagram (Fase B) — no construido aún, solo WhatsApp.
+2. Motor de reglas automáticas para etiquetas (ahora son 100% manuales).
+3. Autenticación por cuenta — hoy admin es un token compartido único
    (`ADMIN_BEARER_TOKEN`) por instancia, no hay login por cliente.
-5. Meta App como "Tech Provider" (una app gestionando varias WABA de
+4. Meta App como "Tech Provider" (una app gestionando varias WABA de
    clientes distintos) para no repetir el proceso de verificación de Meta
    con cada cliente nuevo.
-6. Onboarding sin trabajo manual por cliente — hoy cada instancia nueva
+5. Onboarding sin trabajo manual por cliente — hoy cada instancia nueva
    todavía implica crear a mano repo GitHub + Neon + Render; las
    credenciales de negocio ya son self-serve, pero el aprovisionamiento de
    infraestructura no.
+6. Pulido visual del dashboard (ver nota de diseño arriba).
 
 ## Dónde está todo
-- Código: este repo. Remoto anterior en
-  `github.com/ritanaismoreno-tech/Pablo-Rojo-setter-IA-deply` — no
-  reconectado todavía en esta máquina (ver pendiente #1).
-- Base de datos: Neon (proyecto `pablo-rojo-setter-ia`, región Frankfurt) —
-  tiene el esquema viejo (sin las tablas de onboarding/credentials); hace
-  falta correr `npm run db:migrate` contra ella para ponerla al día.
-- Hosting: Render (Blueprint desde `render.yaml`, ya actualizado).
+- Código: este repo, remoto en
+  `github.com/ritanaismoreno-tech/Pablo-Rojo-setter-IA-deply` (rama `main`),
+  ya reconectado y al día en esta máquina.
+- Base de datos: Neon (proyecto `pablo-rojo-setter-ia`, región Frankfurt),
+  con el esquema al día (migraciones 0000-0004 aplicadas en producción).
+- Hosting: Render (Blueprint desde `render.yaml`), servicio
+  `pablo-rojo-setter-ia`, **live** en https://pablo-rojo-setter-ia.onrender.com
+  con el código actual.
 - Plan técnico completo: `docs/plan.md`.
 - Local: Postgres embebido (`npm run dev:db`) + servidor (`npm run dev`),
   puerto 3101 en esta máquina (el 3000 lo usa otro proyecto local).
 
 ## Credenciales
 - `ADMIN_BEARER_TOKEN`: token de acceso al panel, uno por instancia/cliente.
+- `CREDENTIALS_ENCRYPTION_KEY` de producción: configurada en Render (no
+  reproducida aquí en texto plano). Si se pierde, las credenciales de
+  WhatsApp/Meta/Anthropic guardadas quedan ilegibles y hay que recargarlas.
 - `CREDENTIALS_ENCRYPTION_KEY`: clave de cifrado de las credenciales de
   negocio (WhatsApp/Meta/Anthropic), una por instancia. Generar con
   `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
