@@ -1,5 +1,5 @@
-// Raw WhatsApp Cloud API webhook payload shapes (subset we care about).
-// Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/payload-examples
+// Formas mínimas del payload crudo que envía Meta (WhatsApp Cloud API).
+// Solo se tipan los campos que realmente se leen en v1 (texto entrante).
 
 export interface WhatsAppWebhookPayload {
   object: string;
@@ -13,40 +13,29 @@ export interface WhatsAppEntry {
 
 export interface WhatsAppChange {
   field: string;
-  value: {
-    messaging_product: "whatsapp";
-    metadata: { display_phone_number: string; phone_number_id: string };
-    contacts?: { profile: { name: string }; wa_id: string }[];
-    messages?: WhatsAppInboundMessage[];
-    statuses?: unknown[];
-  };
+  value: WhatsAppChangeValue;
 }
 
-export interface WhatsAppInboundMessage {
+export interface WhatsAppChangeValue {
+  messaging_product: "whatsapp";
+  metadata: {
+    display_phone_number: string;
+    phone_number_id: string;
+  };
+  contacts?: WhatsAppContact[];
+  messages?: WhatsAppMessage[];
+  statuses?: unknown[];
+}
+
+export interface WhatsAppContact {
+  profile: { name: string };
+  wa_id: string;
+}
+
+export interface WhatsAppMessage {
   from: string;
   id: string;
   timestamp: string;
   type: string;
   text?: { body: string };
-}
-
-// Raw Instagram Messaging API webhook payload shapes (subset), for Phase B.
-// Reference: https://developers.facebook.com/docs/messenger-platform/instagram/features/webhook
-
-export interface InstagramWebhookPayload {
-  object: string;
-  entry: InstagramEntry[];
-}
-
-export interface InstagramEntry {
-  id: string;
-  time: number;
-  messaging: InstagramMessagingEvent[];
-}
-
-export interface InstagramMessagingEvent {
-  sender: { id: string };
-  recipient: { id: string };
-  timestamp: number;
-  message?: { mid: string; text?: string };
 }

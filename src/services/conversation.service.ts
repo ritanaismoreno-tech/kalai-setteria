@@ -1,39 +1,39 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { contacts, conversations, messages } from "../db/schema.js";
-import type {
-  NormalizedInboundMessage,
-  Platform,
-} from "../adapters/types.js";
-import { markProcessedIfNew } from "./dedup.service.js";
-import { getActiveSystemPrompt } from "./systemPrompt.service.js";
-import { generateReply, type HistoryTurn } from "./claude.service.js";
-import { sendWhatsAppMessage } from "../senders/whatsapp.sender.js";
-import { logger } from "../lib/logger.js";
+import { NotFoundError } from "../lib/errors.js";
 
-const HISTORY_MESSAGE_LIMIT = 20;
-
-async function findOrCreateContact(platform: Platform, externalId: string, displayName: string | null) {
+export async function findOrCreateContact(params: {
+  platform: "whatsapp" | "instagram";
+  externalId: string;
+  displayName?: string;
+  phoneNumber?: string;
+}) {
   const [existing] = await db
     .select()
     .from(contacts)
-    .where(and(eq(contacts.platform, platform), eq(contacts.externalId, externalId)));
+    .where(and(eq(contacts.platform, params.platform), eq(contacts.externalId, params.externalId)));
 
   if (existing) return existing;
 
   const [created] = await db
     .insert(contacts)
-    .values({ platform, externalId, displayName })
+    .values({
+      platform: params.platform,
+      externalId: params.externalId,
+      displayName: params.displayName,
+      phoneNumber: params.phoneNumber,
+    })
     .returning();
 
   return created;
 }
 
-async function findOrCreateConversation(contactId: string, platform: Platform) {
+export async function findOrCreateConversation(contactId: string, platform: "whatsapp" | "instagram") {
   const [existing] = await db
     .select()
     .from(conversations)
-    .where(eq(conversations.contactId, contactId));
+    .where(and(eq(conversations.contactId, contactId), eq(conversations.platform, platform)));
 
   if (existing) return existing;
 
@@ -45,180 +45,107 @@ async function findOrCreateConversation(contactId: string, platform: Platform) {
   return created;
 }
 
-export async function loadHistory(conversationId: string): Promise<HistoryTurn[]> {
+export async function getConversationById(id: string) {
+  const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));
+  if (!conversation) throw new NotFoundError("Conversación no encontrada");
+  return conversation;
+}
+
+export async function persistMessage(params: {
+  conversationId: string;
+  role: "user" | "assistant" | "system_note";
+  content: string;
+  direction: "inbound" | "outbound";
+  platformMessageId?: string;
+  rawPayload?: unknown;
+}) {
+  const [created] = await db
+    .insert(messages)
+    .values({
+      conversationId: params.conversationId,
+      role: params.role,
+      content: params.content,
+      direction: params.direction,
+      platformMessageId: params.platformMessageId,
+      rawPayload: params.rawPayload,
+    })
+    .returning();
+
+  const now = new Date();
+  await db
+    .update(conversations)
+    .set({
+      lastMessageAt: now,
+      ...(params.direction === "inbound" ? { lastInboundAt: now, followUpsSent: 0 } : {}),
+      updatedAt: now,
+    })
+    .where(eq(conversations.id, params.conversationId));
+
+  return created;
+}
+
+export async function getHistory(conversationId: string, limit = 20) {
   const rows = await db
-    .select({ role: messages.role, content: messages.content })
+    .select()
     .from(messages)
     .where(eq(messages.conversationId, conversationId))
     .orderBy(desc(messages.createdAt))
-    .limit(HISTORY_MESSAGE_LIMIT);
+    .limit(limit);
 
-  return rows
-    .reverse()
-    .filter((row): row is { role: "user" | "assistant"; content: string } =>
-      row.role === "user" || row.role === "assistant",
-    );
+  return rows.reverse();
 }
 
-async function sendReply(platform: Platform, externalUserId: string, text: string) {
-  if (platform === "whatsapp") {
-    return sendWhatsAppMessage(externalUserId, text);
-  }
-  throw new Error(`No sender implemented yet for platform: ${platform}`);
-}
-
-/**
- * Persists an assistant message, sends it on the given platform, and updates
- * the conversation's lastMessageAt/systemPromptVersionId. Shared by the
- * normal inbound-reply flow and the follow-up scheduler.
- */
-export async function sendAndPersistAssistantMessage(
-  conversationId: string,
-  platform: Platform,
-  externalUserId: string,
-  replyText: string,
-  systemPromptId: string,
-): Promise<void> {
-  const [assistantMessage] = await db
-    .insert(messages)
-    .values({
-      conversationId,
-      role: "assistant",
-      content: replyText,
-      direction: "outbound",
+export async function listConversations() {
+  return db
+    .select({
+      id: conversations.id,
+      status: conversations.status,
+      stage: conversations.stage,
+      platform: conversations.platform,
+      lastMessageAt: conversations.lastMessageAt,
+      lastInboundAt: conversations.lastInboundAt,
+      createdAt: conversations.createdAt,
+      contact: {
+        id: contacts.id,
+        displayName: contacts.displayName,
+        phoneNumber: contacts.phoneNumber,
+        externalId: contacts.externalId,
+      },
     })
+    .from(conversations)
+    .innerJoin(contacts, eq(conversations.contactId, contacts.id))
+    .orderBy(desc(conversations.lastMessageAt));
+}
+
+export async function pauseConversation(id: string, pausedBy?: string) {
+  await getConversationById(id);
+  const [updated] = await db
+    .update(conversations)
+    .set({ status: "paused", pausedAt: new Date(), pausedBy, updatedAt: new Date() })
+    .where(eq(conversations.id, id))
     .returning();
-
-  const sendResult = await sendReply(platform, externalUserId, replyText);
-
-  await db
-    .update(messages)
-    .set({ platformMessageId: sendResult.platformMessageId })
-    .where(eq(messages.id, assistantMessage.id));
-
-  await db
-    .update(conversations)
-    .set({
-      lastMessageAt: new Date(),
-      systemPromptVersionId: systemPromptId,
-      updatedAt: new Date(),
-    })
-    .where(eq(conversations.id, conversationId));
+  return updated;
 }
 
-export async function processInboundMessage(inbound: NormalizedInboundMessage): Promise<void> {
-  const isNew = await markProcessedIfNew(inbound.platform, inbound.platformMessageId);
-  if (!isNew) {
-    logger.info({ platformMessageId: inbound.platformMessageId }, "Duplicate webhook delivery, skipping");
-    return;
-  }
-
-  const contact = await findOrCreateContact(
-    inbound.platform,
-    inbound.externalUserId,
-    inbound.senderDisplayName,
-  );
-  const conversation = await findOrCreateConversation(contact.id, inbound.platform);
-
-  await db.insert(messages).values({
-    conversationId: conversation.id,
-    role: "user",
-    content: inbound.text ?? "[mensaje no soportado]",
-    platformMessageId: inbound.platformMessageId,
-    direction: "inbound",
-    rawPayload: inbound.rawPayload,
-  });
-
-  await db
+export async function resumeConversation(id: string) {
+  await getConversationById(id);
+  const [updated] = await db
     .update(conversations)
-    .set({
-      lastMessageAt: inbound.timestamp,
-      lastInboundAt: inbound.timestamp,
-      followUpsSent: 0,
-      updatedAt: new Date(),
-    })
-    .where(eq(conversations.id, conversation.id));
-
-  if (conversation.status === "paused") {
-    logger.info({ conversationId: conversation.id }, "Conversation is paused, not replying");
-    return;
-  }
-
-  if (!inbound.isTextMessage || !inbound.text) {
-    logger.info(
-      { conversationId: conversation.id, messageType: "non-text" },
-      "Non-text inbound message, skipping AI reply for v1",
-    );
-    return;
-  }
-
-  const systemPrompt = await getActiveSystemPrompt();
-  const history = await loadHistory(conversation.id);
-
-  const replyText = await generateReply(systemPrompt.content, history, inbound.text);
-
-  const [assistantMessage] = await db
-    .insert(messages)
-    .values({
-      conversationId: conversation.id,
-      role: "assistant",
-      content: replyText,
-      direction: "outbound",
-    })
+    .set({ status: "active", pausedAt: null, pausedBy: null, updatedAt: new Date() })
+    .where(eq(conversations.id, id))
     .returning();
-
-  const sendResult = await sendReply(inbound.platform, inbound.externalUserId, replyText);
-
-  await db
-    .update(messages)
-    .set({ platformMessageId: sendResult.platformMessageId })
-    .where(eq(messages.id, assistantMessage.id));
-
-  await db
-    .update(conversations)
-    .set({
-      lastMessageAt: new Date(),
-      systemPromptVersionId: systemPrompt.id,
-      updatedAt: new Date(),
-    })
-    .where(eq(conversations.id, conversation.id));
-}
-
-export async function setConversationPaused(
-  conversationId: string,
-  paused: boolean,
-  pausedBy?: string,
-) {
-  await db
-    .update(conversations)
-    .set({
-      status: paused ? "paused" : "active",
-      pausedAt: paused ? new Date() : null,
-      pausedBy: paused ? (pausedBy ?? "admin") : null,
-      updatedAt: new Date(),
-    })
-    .where(eq(conversations.id, conversationId));
-}
-
-const VALID_STAGES = [
-  "nuevos",
-  "conversacion",
-  "cualificados",
-  "agendados",
-  "perdidos",
-] as const;
-export type ConversationStage = (typeof VALID_STAGES)[number];
-
-export function isValidStage(value: unknown): value is ConversationStage {
-  return typeof value === "string" && (VALID_STAGES as readonly string[]).includes(value);
+  return updated;
 }
 
 export async function setConversationStage(
-  conversationId: string,
-  stage: ConversationStage,
-): Promise<void> {
-  await db
+  id: string,
+  stage: "nuevos" | "conversacion" | "cualificados" | "agendados" | "perdidos",
+) {
+  await getConversationById(id);
+  const [updated] = await db
     .update(conversations)
     .set({ stage, updatedAt: new Date() })
-    .where(eq(conversations.id, conversationId));
+    .where(eq(conversations.id, id))
+    .returning();
+  return updated;
 }

@@ -18,6 +18,7 @@
   "type": "module",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
+    "csv-parse": "^7.0.2",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
@@ -40,6 +41,7 @@
     "esbuild@0.18.20": true,
     "esbuild@0.25.12": true,
     "esbuild@0.28.1": true,
-    "fsevents@2.3.3": true
+    "fsevents@2.3.3": true,
+    "@embedded-postgres/darwin-arm64@18.4.0-beta.17": true
   }
 }

@@ -12,15 +12,7 @@ services:
         value: claude-sonnet-5
       - key: DATABASE_URL
         sync: false
-      - key: META_APP_SECRET
-        sync: false
-      - key: META_WEBHOOK_VERIFY_TOKEN
-        sync: false
-      - key: WHATSAPP_ACCESS_TOKEN
-        sync: false
-      - key: WHATSAPP_PHONE_NUMBER_ID
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
       - key: ADMIN_BEARER_TOKEN
+        sync: false
+      - key: CREDENTIALS_ENCRYPTION_KEY
         sync: false

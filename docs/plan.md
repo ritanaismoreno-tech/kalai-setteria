@@ -99,7 +99,12 @@ Errores tras el dedup: se loguean pero igual se responde 200.
 
 Para este volumen (~20 conversaciones/día) se procesa todo dentro del mismo request del webhook — sin BullMQ/Redis. Revisitar solo si el volumen crece un orden de magnitud.
 
-## Checklist de configuración en Meta (pendiente, lo hace el cliente)
+## Checklist de configuración en Meta (lo hace el cliente, self-serve)
+
+Actualizado 2026-08-20: ya no es Rita quien completa variables de entorno en
+Render — cada cliente hace esto desde la pestaña Conexiones de su propia
+instancia (`PUT /admin/connections/:provider`, credenciales cifradas en
+`credentials` con `src/lib/crypto.ts`).
 
 1. Confirmar/crear cuenta de Meta Business Manager.
 2. Crear App en Meta for Developers (tipo Business), agregar productos WhatsApp e Instagram.
@@ -108,18 +113,32 @@ Para este volumen (~20 conversaciones/día) se procesa todo dentro del mismo req
 5. Confirmar que la cuenta de Instagram sea Business/Creator, vinculada a una Página de Facebook.
 6. Solicitar permiso `instagram_manage_messages` vía App Review — iniciar temprano, puede tardar días.
 7. Obtener el App Secret (App Settings → Basic).
-8. Configurar el webhook apuntando a `https://pablo-rojo-setter-ia.onrender.com/webhooks/whatsapp`, con el verify token ya generado (ver Render).
-9. Actualizar en Render: `META_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `ANTHROPIC_API_KEY`.
+8. En la pestaña Conexiones de su instancia, el cliente carga: WhatsApp
+   (`phoneNumberId`, `accessToken`, `wabaId`), Meta (`appSecret` y un
+   `webhookVerifyToken` que él mismo elige o genera con el botón "Generar
+   aleatorio"), y Anthropic (`apiKey`, `model` opcional).
+9. Configurar el webhook en Meta apuntando a `https://<su-instancia>.onrender.com/webhooks/whatsapp`,
+   con el mismo `webhookVerifyToken` que cargó en el paso 8.
+
+Lo único que sigue siendo variable de entorno (infraestructura, no del
+cliente): `DATABASE_URL`, `ADMIN_BEARER_TOKEN`, `CREDENTIALS_ENCRYPTION_KEY`,
+`CLAUDE_MODEL` (default, sobreescribible por el cliente en Conexiones).
 
 ## Pendiente / próximos pasos
 
+- ~~Conexiones self-serve~~ — resuelto 2026-08-20: pestaña Conexiones
+  editable, credenciales cifradas en base de datos, sin variables de entorno
+  por cliente.
+- Reconectar el repo con GitHub y desplegar — el despliegue en Render
+  todavía tiene el código de antes del pivote a producto genérico.
 - Conectar número de prueba de Meta (gratis, sin riesgo) para validar con mensajes reales.
-- Rellenar el brief de contenido (Google Doc "Brief de contenido — SetterIA evergreen") y cargarlo como system prompt real.
 - Instagram (Fase B): mismo patrón que WhatsApp gracias a la capa de adapters, adapter/sender/controller nuevos.
 - Motor de reglas automáticas para etiquetas (ahora mismo son 100% manuales).
-- Importación de leads por CSV + envío individual de plantilla.
+- Importación de leads por CSV + envío individual de plantilla (para iniciar conversaciones, no confundir con el CSV de conversaciones de entrenamiento del onboarding).
 - Selección múltiple en el pipeline (exportar/mover/seguimiento en lote).
-- Vista de Conexiones con guardado seguro en base de datos (si se decide mover ahí, en vez de variables de entorno de Render).
+- Autenticación por cuenta (hoy es un token compartido por instancia).
+- Meta App como "Tech Provider" para no repetir verificación de Meta por cliente.
+- Onboarding sin trabajo manual de infraestructura por cliente (hoy crear una instancia nueva sigue implicando GitHub + Neon + Render a mano).
 
 ## Verificación
 

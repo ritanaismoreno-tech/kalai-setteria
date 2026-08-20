@@ -1,23 +1,54 @@
-// Local-only helper: spins up a real Postgres via the embedded-postgres
-// package (no Docker/Homebrew needed) for smoke testing. NOT used in
-// production — Railway provides managed Postgres there.
 import EmbeddedPostgres from "embedded-postgres";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, "..", ".pgdata");
+const PORT = 5433;
+const DB_NAME = "setter_ia";
+const USER = "postgres";
+const PASSWORD = "postgres";
 
 const pg = new EmbeddedPostgres({
-  databaseDir: ".dev-postgres-data",
-  user: "user",
-  password: "password",
-  port: 5433,
-  persistent: false,
+  databaseDir: DATA_DIR,
+  user: USER,
+  password: PASSWORD,
+  port: PORT,
+  persistent: true,
 });
 
-await pg.initialise();
-await pg.start();
-await pg.createDatabase("pablo_rojo_setter");
+async function main() {
+  const alreadyInitialised = fs.existsSync(path.join(DATA_DIR, "PG_VERSION"));
+  if (!alreadyInitialised) {
+    await pg.initialise();
+  }
+  await pg.start();
 
-console.log("DATABASE_URL=postgres://user:password@localhost:5433/pablo_rojo_setter");
+  try {
+    await pg.createDatabase(DB_NAME);
+  } catch {
+    // Ya existe de una corrida anterior, seguimos.
+  }
 
-process.on("SIGINT", async () => {
-  await pg.stop();
-  process.exit(0);
+  const url = `postgresql://${USER}:${PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  console.log(`\nPostgres local corriendo.`);
+  console.log(`DATABASE_URL=${url}\n`);
+  console.log("Ctrl+C para detenerlo.");
+}
+
+async function shutdown() {
+  try {
+    await pg.stop();
+  } finally {
+    process.exit(0);
+  }
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });

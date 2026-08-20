@@ -1,35 +1,24 @@
 import { db } from "../db/client.js";
 import { processedWebhookEvents } from "../db/schema.js";
-import type { Platform } from "../adapters/types.js";
 
 /**
- * Records a platform message id as processed. Returns false if it was
- * already recorded (i.e. this is a Meta webhook retry / duplicate delivery),
- * in which case the caller should short-circuit without re-processing.
+ * Intenta registrar un platform_message_id como procesado.
+ * Devuelve true si es la primera vez que se ve (hay que procesarlo),
+ * false si ya se había procesado (reintento de Meta, cortar aquí).
  */
-export async function markProcessedIfNew(
-  platform: Platform,
+export async function claimWebhookEvent(
   platformMessageId: string,
+  platform: "whatsapp" | "instagram",
 ): Promise<boolean> {
   try {
-    await db.insert(processedWebhookEvents).values({
-      platform,
-      platformMessageId,
-    });
+    await db.insert(processedWebhookEvents).values({ platformMessageId, platform });
     return true;
-  } catch (error) {
-    if (isUniqueViolation(error)) {
-      return false;
-    }
-    throw error;
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) return false;
+    throw err;
   }
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "23505"
-  );
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "23505";
 }

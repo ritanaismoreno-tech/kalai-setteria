@@ -1,98 +1,74 @@
-import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
+import { and, eq, isNotNull, lt } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { contacts, conversations } from "../db/schema.js";
-import { getActiveSystemPrompt } from "./systemPrompt.service.js";
-import { generateFollowUp } from "./claude.service.js";
-import { loadHistory, sendAndPersistAssistantMessage } from "./conversation.service.js";
 import { logger } from "../lib/logger.js";
+import { sendWhatsAppText } from "../senders/whatsapp.sender.js";
+import { persistMessage } from "./conversation.service.js";
 
-const FOLLOW_UP_DELAY_HOURS = Number(process.env.FOLLOW_UP_DELAY_HOURS ?? 17);
-const FOLLOW_UP_MAX_COUNT = Number(process.env.FOLLOW_UP_MAX_COUNT ?? 1);
-const FOLLOW_UP_CHECK_INTERVAL_MINUTES = Number(
-  process.env.FOLLOW_UP_CHECK_INTERVAL_MINUTES ?? 15,
-);
-const SESSION_WINDOW_HOURS = 24;
+// Ver docs/plan.md y docs/system-prompt-brief.md (sección 10): mientras el
+// follow-up se envíe antes de que expiren las 24h desde el último mensaje del
+// lead, sigue siendo un mensaje de sesión normal (sin plantilla, sin costo).
+const FOLLOW_UP_DELAY_HOURS = 17;
+const WINDOW_HOURS = 24;
+const MAX_FOLLOW_UPS = 1;
+const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
-async function findConversationsDueForFollowUp() {
+const FALLBACK_FOLLOW_UP_TEXT =
+  "Hola de nuevo 🙂 Quería asegurarme de que viste mi mensaje anterior. " +
+  "¿Sigues por aquí? Cuéntame si tienes alguna duda.";
+
+export function startFollowUpScheduler(): void {
+  runCheck().catch((err) => logger.error({ err }, "Error en el chequeo de follow-ups"));
+  setInterval(() => {
+    runCheck().catch((err) => logger.error({ err }, "Error en el chequeo de follow-ups"));
+  }, CHECK_INTERVAL_MS);
+}
+
+async function runCheck(): Promise<void> {
   const now = Date.now();
   const delayThreshold = new Date(now - FOLLOW_UP_DELAY_HOURS * 60 * 60 * 1000);
-  const windowCutoff = new Date(now - SESSION_WINDOW_HOURS * 60 * 60 * 1000);
+  const windowThreshold = new Date(now - WINDOW_HOURS * 60 * 60 * 1000);
 
-  const rows = await db
+  const candidates = await db
     .select({
-      conversationId: conversations.id,
-      platform: conversations.platform,
-      externalUserId: contacts.externalId,
-      lastInboundAt: conversations.lastInboundAt,
+      id: conversations.id,
+      followUpsSent: conversations.followUpsSent,
+      externalId: contacts.externalId,
     })
     .from(conversations)
     .innerJoin(contacts, eq(conversations.contactId, contacts.id))
     .where(
       and(
         eq(conversations.status, "active"),
+        eq(conversations.platform, "whatsapp"),
         isNotNull(conversations.lastInboundAt),
-        // assistant replied last (lead hasn't responded since)
-        sql`${conversations.lastMessageAt} > ${conversations.lastInboundAt}`,
-        lt(conversations.followUpsSent, FOLLOW_UP_MAX_COUNT),
+        lt(conversations.lastInboundAt, delayThreshold),
       ),
     );
 
-  return rows.filter(
-    (row) =>
-      row.lastInboundAt !== null &&
-      row.lastInboundAt <= delayThreshold &&
-      row.lastInboundAt > windowCutoff,
-  );
-}
+  for (const candidate of candidates) {
+    if (candidate.followUpsSent >= MAX_FOLLOW_UPS) continue;
 
-export async function runFollowUpCheck(): Promise<void> {
-  const due = await findConversationsDueForFollowUp();
+    // No mandar si ya se salió de la ventana de 24h (se deja perder el seguimiento, no se abre plantilla).
+    const [fresh] = await db.select().from(conversations).where(eq(conversations.id, candidate.id));
+    if (!fresh?.lastInboundAt || fresh.lastInboundAt < windowThreshold) continue;
+    if (fresh.status !== "active" || fresh.followUpsSent >= MAX_FOLLOW_UPS) continue;
 
-  for (const conversation of due) {
     try {
-      const systemPrompt = await getActiveSystemPrompt();
-      const history = await loadHistory(conversation.conversationId);
-
-      const followUpText = await generateFollowUp(systemPrompt.content, history);
-
-      await sendAndPersistAssistantMessage(
-        conversation.conversationId,
-        conversation.platform,
-        conversation.externalUserId,
-        followUpText,
-        systemPrompt.id,
-      );
-
+      await sendWhatsAppText(candidate.externalId, FALLBACK_FOLLOW_UP_TEXT);
+      await persistMessage({
+        conversationId: candidate.id,
+        role: "assistant",
+        content: FALLBACK_FOLLOW_UP_TEXT,
+        direction: "outbound",
+      });
       await db
         .update(conversations)
-        .set({
-          followUpsSent: sql`${conversations.followUpsSent} + 1`,
-          updatedAt: new Date(),
-        })
-        .where(eq(conversations.id, conversation.conversationId));
-
-      logger.info(
-        { conversationId: conversation.conversationId },
-        "Sent follow-up message",
-      );
-    } catch (error) {
-      logger.error(
-        { error, conversationId: conversation.conversationId },
-        "Failed to send follow-up",
-      );
+        .set({ followUpsSent: fresh.followUpsSent + 1 })
+        .where(eq(conversations.id, candidate.id));
+      logger.info({ conversationId: candidate.id }, "Follow-up enviado");
+    } catch (err) {
+      logger.error({ err, conversationId: candidate.id }, "Fallo al enviar follow-up");
     }
   }
-}
-
-export function startFollowUpScheduler(): void {
-  const intervalMs = FOLLOW_UP_CHECK_INTERVAL_MINUTES * 60 * 1000;
-  setInterval(() => {
-    runFollowUpCheck().catch((error) =>
-      logger.error({ error }, "Follow-up scheduler tick failed"),
-    );
-  }, intervalMs);
-  logger.info(
-    { intervalMinutes: FOLLOW_UP_CHECK_INTERVAL_MINUTES },
-    "Follow-up scheduler started",
-  );
 }

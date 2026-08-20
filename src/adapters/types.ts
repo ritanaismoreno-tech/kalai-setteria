@@ -1,22 +1,16 @@
-export type Platform = "whatsapp" | "instagram";
-
 export interface NormalizedInboundMessage {
-  platform: Platform;
-  externalUserId: string;
+  platform: "whatsapp" | "instagram";
+  externalContactId: string;
+  contactDisplayName?: string;
+  contactPhoneNumber?: string;
   platformMessageId: string;
   text: string | null;
   isTextMessage: boolean;
-  timestamp: Date;
-  senderDisplayName: string | null;
   rawPayload: unknown;
 }
 
 export interface NormalizedOutboundMessage {
-  platform: Platform;
-  externalUserId: string;
+  platform: "whatsapp" | "instagram";
+  toExternalId: string;
   text: string;
-}
-
-export interface OutboundSendResult {
-  platformMessageId: string;
 }

@@ -1,9 +1,9 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { conversationTags, tags } from "../db/schema.js";
+import { tags, conversationTags } from "../db/schema.js";
 
 export async function listTags() {
-  return db.select().from(tags).orderBy(tags.createdAt);
+  return db.select().from(tags).orderBy(asc(tags.name));
 }
 
 export async function createTag(name: string, color: string) {
@@ -11,44 +11,38 @@ export async function createTag(name: string, color: string) {
   return created;
 }
 
-export async function applyTagToConversation(conversationId: string, tagId: string) {
+export async function applyTag(conversationId: string, tagId: string) {
   await db
     .insert(conversationTags)
     .values({ conversationId, tagId })
     .onConflictDoNothing();
 }
 
-export async function removeTagFromConversation(conversationId: string, tagId: string) {
+export async function removeTag(conversationId: string, tagId: string) {
   await db
     .delete(conversationTags)
-    .where(
-      and(
-        eq(conversationTags.conversationId, conversationId),
-        eq(conversationTags.tagId, tagId),
-      ),
-    );
+    .where(and(eq(conversationTags.conversationId, conversationId), eq(conversationTags.tagId, tagId)));
 }
 
-export async function getTagsForConversations(
-  conversationIds: string[],
-): Promise<Record<string, { id: string; name: string; color: string }[]>> {
-  if (conversationIds.length === 0) return {};
+export async function getTagsForConversations(conversationIds: string[]) {
+  if (conversationIds.length === 0) return new Map<string, { id: string; name: string; color: string }[]>();
 
   const rows = await db
     .select({
       conversationId: conversationTags.conversationId,
-      tagId: tags.id,
+      id: tags.id,
       name: tags.name,
       color: tags.color,
     })
     .from(conversationTags)
-    .innerJoin(tags, eq(conversationTags.tagId, tags.id))
-    .where(inArray(conversationTags.conversationId, conversationIds));
+    .innerJoin(tags, eq(conversationTags.tagId, tags.id));
 
-  const result: Record<string, { id: string; name: string; color: string }[]> = {};
+  const byConversation = new Map<string, { id: string; name: string; color: string }[]>();
   for (const row of rows) {
-    if (!result[row.conversationId]) result[row.conversationId] = [];
-    result[row.conversationId].push({ id: row.tagId, name: row.name, color: row.color });
+    if (!conversationIds.includes(row.conversationId)) continue;
+    const list = byConversation.get(row.conversationId) ?? [];
+    list.push({ id: row.id, name: row.name, color: row.color });
+    byConversation.set(row.conversationId, list);
   }
-  return result;
+  return byConversation;
 }

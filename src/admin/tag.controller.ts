@@ -1,26 +1,36 @@
 import { Router } from "express";
-import { createTag, listTags } from "../services/tag.service.js";
-import { requireAdminToken } from "./auth.middleware.js";
+import { z } from "zod";
+import { listTags, createTag, applyTag, removeTag } from "../services/tag.service.js";
+import { AppError } from "../lib/errors.js";
 
-export const adminTagRouter = Router();
-adminTagRouter.use(requireAdminToken);
+export const tagRouter = Router();
 
-adminTagRouter.get("/", async (_req, res) => {
-  const rows = await listTags();
-  res.json(rows);
+tagRouter.get("/tags", async (_req, res) => {
+  res.json({ tags: await listTags() });
 });
 
-adminTagRouter.post("/", async (req, res) => {
-  const name = req.body?.name;
-  const color = req.body?.color;
-  if (typeof name !== "string" || name.trim().length === 0) {
-    res.status(400).json({ error: "name is required" });
-    return;
-  }
-  if (typeof color !== "string" || color.trim().length === 0) {
-    res.status(400).json({ error: "color is required" });
-    return;
-  }
-  const created = await createTag(name.trim(), color.trim());
-  res.status(201).json(created);
+const createTagSchema = z.object({
+  name: z.string().min(1).max(100),
+  color: z.string().min(1).max(16),
+});
+
+tagRouter.post("/tags", async (req, res) => {
+  const parsed = createTagSchema.safeParse(req.body);
+  if (!parsed.success) throw new AppError("name/color inválidos", 400);
+
+  const tag = await createTag(parsed.data.name, parsed.data.color);
+  res.status(201).json({ tag });
+});
+
+tagRouter.post("/conversations/:id/tags", async (req, res) => {
+  const parsed = z.object({ tagId: z.string().uuid() }).safeParse(req.body);
+  if (!parsed.success) throw new AppError("tagId inválido", 400);
+
+  await applyTag(req.params.id, parsed.data.tagId);
+  res.status(201).json({ ok: true });
+});
+
+tagRouter.delete("/conversations/:id/tags/:tagId", async (req, res) => {
+  await removeTag(req.params.id, req.params.tagId);
+  res.json({ ok: true });
 });
