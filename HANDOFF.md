@@ -10,7 +10,28 @@ no lleva contenido ni credenciales de ningún cliente precargadas. El piloto
 (Pablo Rojo / Enformix) es solo el primer cliente de prueba, no la base del
 producto.
 
-## Estado actual (2026-08-20)
+## Estado actual (2026-08-22)
+- **URL definitiva de producción**: https://altiora-setteria.onrender.com
+  (servicio de Render llamado "altiora.setteria" — el nombre interno lleva
+  el punto que pidió Rita, pero la URL pública lo sanea a guion porque un
+  punto en `onrender.com` implicaría un subdominio de verdad, que Render no
+  permite crear sobre su propio dominio compartido).
+- **El servicio dejó de ser Blueprint-managed**: Render bloquea el
+  renombrado de servicios ligados a un Blueprint (confirmado — ni la
+  automatización ni un clic manual de Rita conseguían que el botón "Save
+  changes" hiciera nada, cero peticiones de red). La única forma de
+  renombrar de verdad fue crear un servicio nuevo desde cero con
+  "New Web Service" (no vía Blueprint), apuntando al mismo repo/rama y a la
+  misma base de datos de Neon (mismas `DATABASE_URL`, `ADMIN_BEARER_TOKEN`,
+  `CREDENTIALS_ENCRYPTION_KEY` — el login y los datos no cambiaron para
+  Rita). Se verificó que el nuevo servicio funcionaba antes de borrar el
+  viejo. `render.yaml` queda como referencia de la config pero ya no
+  gestiona el deploy real (ver nota dentro del archivo).
+- Los servicios viejos (`pablo-rojo-setter-ia` original y un paso
+  intermedio llamado `setteria`) se borraron una vez confirmado que
+  `altiora-setteria` funcionaba — ya no existen en Render.
+
+## Estado anterior (2026-08-20)
 - **Conexiones self-serve**: la pestaña "Conexiones" dejó de ser de solo
   lectura de variables de entorno. Ahora es un formulario real por
   proveedor (WhatsApp Cloud API, Meta App, Anthropic) que cada cliente
@@ -67,9 +88,10 @@ porque faltaba `CREDENTIALS_ENCRYPTION_KEY` (esperado, ver validación en
 env vars viejas que ya no se usan (`META_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`,
 `WHATSAPP_PHONE_NUMBER_ID`, `ANTHROPIC_API_KEY`, `META_WEBHOOK_VERIFY_TOKEN`),
 y el redeploy manual quedó **live**. Verificado desde fuera:
-`https://pablo-rojo-setter-ia.onrender.com/health` responde `{"ok":true}`
-(la respuesta del código nuevo) y `/admin/onboarding/config` exige token
-correctamente. Las migraciones (incluidas `program_config`,
+`/health` respondía `{"ok":true}` (la respuesta del código nuevo) y
+`/admin/onboarding/config` exigía token correctamente. Este servicio
+(`pablo-rojo-setter-ia`) ya no existe — ver "Estado actual" arriba, se
+migró a `altiora-setteria`. Las migraciones (incluidas `program_config`,
 `training_conversation_batches`, `training_messages`, `credentials`) se
 aplicaron solas contra la Neon de producción como parte del `startCommand`
 de `render.yaml`.
@@ -101,9 +123,9 @@ retomar: portar el diseño visual viejo sobre la funcionalidad nueva.
   ya reconectado y al día en esta máquina.
 - Base de datos: Neon (proyecto `pablo-rojo-setter-ia`, región Frankfurt),
   con el esquema al día (migraciones 0000-0004 aplicadas en producción).
-- Hosting: Render (Blueprint desde `render.yaml`), servicio
-  `pablo-rojo-setter-ia`, **live** en https://pablo-rojo-setter-ia.onrender.com
-  con el código actual.
+- Hosting: Render, servicio "altiora.setteria" (creado manualmente, no vía
+  Blueprint), **live** en https://altiora-setteria.onrender.com con el
+  código actual.
 - Plan técnico completo: `docs/plan.md`.
 - Local: Postgres embebido (`npm run dev:db`) + servidor (`npm run dev`),
   puerto 3101 en esta máquina (el 3000 lo usa otro proyecto local).

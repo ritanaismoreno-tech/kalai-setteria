@@ -1,6 +1,10 @@
+# Nota (2026-08-22): el servicio real en Render ("altiora-setteria") ya NO
+# está gestionado por este Blueprint — se creó a mano vía "New Web Service"
+# porque Render bloquea el renombrado de servicios ligados a un Blueprint.
+# Este archivo queda solo como referencia de la config (build/start/env vars).
 services:
   - type: web
-    name: pablo-rojo-setter-ia
+    name: altiora-setteria
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
