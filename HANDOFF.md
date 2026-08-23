@@ -12,14 +12,21 @@ producto.
 
 ## Estado actual (2026-08-23)
 - **Rebrand Altiora → Kalai en curso**: el producto pasa a llamarse "Setteria"
-  (dentro de la empresa "Kalai"). Pendiente hacer a mano en el panel de
-  Render: renombrar el servicio `altiora-setteria` a `kalai-setteria` (repetir
-  el mismo procedimiento de "New Web Service" descrito abajo, ya que Render
-  no permite renombrar un servicio existente). El repo de GitHub ya se
-  renombró a `kalai-setteria`. Hasta que el servicio de Render se renombre,
-  la URL real de producción sigue siendo la que aparece en la entrada de
-  abajo (2026-08-22) — no está actualizada todavía a un dominio `kalai.com`
-  porque ese dominio aún no se ha comprado.
+  (dentro de la empresa "Kalai"). El repo de GitHub ya se renombró a
+  `kalai-setteria`, y el servicio de Render también se renombró — de
+  `altiora.setteria` a `kalai.setteria` (el rename SÍ funcionó desde el panel;
+  la nota anterior de que Render lo bloqueaba era un error de procedimiento
+  con la automatización, no una limitación real de la plataforma).
+  **Importante**: renombrar el servicio en Render cambia solo el nombre
+  mostrado en el panel — la URL pública sigue siendo
+  `altiora-setteria.onrender.com` (Render fija el slug de la URL al crear el
+  servicio y no lo actualiza al renombrar). Para que la URL real diga
+  `kalai-setteria` o algo con el dominio `kalai.com`, hace falta o bien
+  recrear el servicio desde cero con un nuevo slug (implica downtime y
+  migrar `DATABASE_URL`/`ADMIN_BEARER_TOKEN`/`CREDENTIALS_ENCRYPTION_KEY`,
+  igual que se hizo el 2026-08-22 — no hacerlo sin decisión explícita de
+  Rita), o bien esperar a comprar `kalai.com` y añadirlo como dominio
+  personalizado del servicio.
 
 ## Estado actual (2026-08-22)
 - **URL definitiva de producción**: https://altiora-setteria.onrender.com
