@@ -10,6 +10,17 @@ no lleva contenido ni credenciales de ningún cliente precargadas. El piloto
 (Pablo Rojo / Enformix) es solo el primer cliente de prueba, no la base del
 producto.
 
+## Estado actual (2026-08-23)
+- **Rebrand Altiora → Kalai en curso**: el producto pasa a llamarse "Setteria"
+  (dentro de la empresa "Kalai"). Pendiente hacer a mano en el panel de
+  Render: renombrar el servicio `altiora-setteria` a `kalai-setteria` (repetir
+  el mismo procedimiento de "New Web Service" descrito abajo, ya que Render
+  no permite renombrar un servicio existente). El repo de GitHub ya se
+  renombró a `kalai-setteria`. Hasta que el servicio de Render se renombre,
+  la URL real de producción sigue siendo la que aparece en la entrada de
+  abajo (2026-08-22) — no está actualizada todavía a un dominio `kalai.com`
+  porque ese dominio aún no se ha comprado.
+
 ## Estado actual (2026-08-22)
 - **URL definitiva de producción**: https://altiora-setteria.onrender.com
   (servicio de Render llamado "altiora.setteria" — el nombre interno lleva

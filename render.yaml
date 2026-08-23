@@ -1,10 +1,12 @@
-# Nota (2026-08-22): el servicio real en Render ("altiora-setteria") ya NO
-# está gestionado por este Blueprint — se creó a mano vía "New Web Service"
+# Nota (2026-08-23, rebrand Altiora → Kalai): el servicio real en Render
+# ("altiora-setteria" todavía, pendiente de renombrar a mano a "kalai-setteria")
+# ya NO está gestionado por este Blueprint — se creó a mano vía "New Web Service"
 # porque Render bloquea el renombrado de servicios ligados a un Blueprint.
-# Este archivo queda solo como referencia de la config (build/start/env vars).
+# Este archivo queda solo como referencia de la config (build/start/env vars);
+# el nombre de abajo es el destino deseado, no el nombre real actual del servicio.
 services:
   - type: web
-    name: altiora-setteria
+    name: kalai-setteria
     runtime: node
     plan: free
     buildCommand: npm install && npm run build

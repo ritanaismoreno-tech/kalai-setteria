@@ -56,6 +56,6 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(env.PORT, () => {
-  logger.info(`SetterIA escuchando en el puerto ${env.PORT}`);
+  logger.info(`Kalai Setteria escuchando en el puerto ${env.PORT}`);
   startFollowUpScheduler();
 });

@@ -1,4 +1,4 @@
-# SetterIA
+# Kalai Setteria
 
 Backend + panel de administración que conecta WhatsApp Cloud API (y
 próximamente Instagram Messaging API) con Claude para responder a leads y

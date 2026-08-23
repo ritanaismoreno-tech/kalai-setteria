@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SetterIA — Panel de administración</title>
+<title>Kalai Setteria — Panel de administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,7 +14,7 @@
 <!-- Pantalla de login -->
 <div id="login-screen" class="login-screen">
   <div class="login-card">
-    <div class="login-logo">SetterIA</div>
+    <div class="login-logo">Kalai Setteria</div>
     <p class="login-subtitle">Panel de administración</p>
     <label class="field-label" for="token-input">Token de acceso</label>
     <input id="token-input" type="password" placeholder="Pega tu token de administrador" autocomplete="off" />
@@ -24,7 +27,7 @@
 <div id="app" class="app" hidden>
   <header class="topbar">
     <div class="topbar-left">
-      <span class="brand">SetterIA</span>
+      <span class="brand">Kalai Setteria</span>
       <span class="brand-sub" id="brand-sub">Sin configurar</span>
     </div>
     <nav class="tabs">
@@ -40,6 +43,39 @@
   <!-- Vista Pipeline -->
   <main id="tab-pipeline" class="tab-panel">
     <div class="pipeline" id="pipeline-columns"></div>
+
+    <!-- Conversación: sustituye al tablero en el propio panel, no se abre encima -->
+    <div id="pipeline-thread" class="pipeline-thread" hidden>
+      <div class="stage-pillbar" id="stage-pillbar"></div>
+
+      <div class="chat-header">
+        <button id="chat-close-btn" class="btn btn-ghost btn-icon chat-back-btn" title="Volver al pipeline">←</button>
+        <div class="chat-avatar" id="chat-avatar">—</div>
+        <div class="chat-header-info">
+          <div class="chat-contact-name" id="chat-contact-name">—</div>
+          <div class="chat-contact-meta" id="chat-contact-meta">—</div>
+        </div>
+        <button id="chat-pause-btn" class="btn btn-secondary chat-pause-btn">Pausar IA</button>
+      </div>
+
+      <div class="chat-toolbar">
+        <select id="chat-stage-select" class="select">
+          <option value="nuevos">Nuevos</option>
+          <option value="conversacion">Conversación</option>
+          <option value="cualificados">Cualificados</option>
+          <option value="agendados">Agendados</option>
+          <option value="perdidos">Perdidos</option>
+        </select>
+        <div class="chat-tags" id="chat-tags"></div>
+        <div class="chat-tags-add">
+          <select id="chat-tag-select" class="select"></select>
+          <button id="chat-tag-add-btn" class="btn btn-secondary btn-small">+ Etiqueta</button>
+          <button id="chat-tag-new-btn" class="btn btn-ghost btn-small">Nueva…</button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages"></div>
+    </div>
   </main>
 
   <!-- Vista Configuración (onboarding) -->
@@ -55,39 +91,6 @@
     <div class="connections-grid" id="connections-list"></div>
   </main>
 
-  <!-- Fondo oscurecido detrás de la conversación -->
-  <div id="chat-backdrop" class="chat-backdrop" hidden></div>
-
-  <!-- Vista de conversación, estilo WhatsApp -->
-  <aside id="chat-panel" class="chat-panel" hidden>
-    <div class="chat-header">
-      <button id="chat-close-btn" class="btn btn-ghost btn-icon chat-back-btn" title="Volver al pipeline">←</button>
-      <div class="chat-avatar" id="chat-avatar">—</div>
-      <div class="chat-header-info">
-        <div class="chat-contact-name" id="chat-contact-name">—</div>
-        <div class="chat-contact-meta" id="chat-contact-meta">—</div>
-      </div>
-      <button id="chat-pause-btn" class="btn btn-secondary chat-pause-btn">Pausar IA</button>
-    </div>
-
-    <div class="chat-toolbar">
-      <select id="chat-stage-select" class="select">
-        <option value="nuevos">Nuevos</option>
-        <option value="conversacion">Conversación</option>
-        <option value="cualificados">Cualificados</option>
-        <option value="agendados">Agendados</option>
-        <option value="perdidos">Perdidos</option>
-      </select>
-      <div class="chat-tags" id="chat-tags"></div>
-      <div class="chat-tags-add">
-        <select id="chat-tag-select" class="select"></select>
-        <button id="chat-tag-add-btn" class="btn btn-secondary btn-small">+ Etiqueta</button>
-        <button id="chat-tag-new-btn" class="btn btn-ghost btn-small">Nueva…</button>
-      </div>
-    </div>
-
-    <div class="chat-messages" id="chat-messages"></div>
-  </aside>
 </div>
 
 <!-- Modal: nueva etiqueta -->
