@@ -1,14 +1,13 @@
-# Nota (2026-08-23, rebrand Altiora → Kalai): el servicio real en Render ya
-# se renombró a "kalai.setteria" (nombre visible en el panel), pero ya NO
-# está gestionado por este Blueprint — se creó a mano vía "New Web Service"
-# porque Render bloquea el renombrado de servicios ligados a un Blueprint.
-# Este archivo queda solo como referencia de la config (build/start/env vars).
-# Ojo: renombrar el servicio en Render NO cambia su URL pública — esa sigue
-# siendo altiora-setteria.onrender.com hasta que se recree el servicio con un
-# slug nuevo o se le añada un dominio personalizado de kalai.com.
+# Nota (2026-08-23, rebrand Altiora → Kalai): el servicio se recreó desde
+# cero en Render como "kalai-setteria" (URL: kalai-setteria.onrender.com),
+# ya sin ninguna referencia a Altiora. Sigue sin estar gestionado por este
+# Blueprint — se creó a mano vía "New Web Service" porque renombrar un
+# servicio existente NO le cambia la URL pública (Render la fija al crear
+# el servicio). Este archivo queda solo como referencia de la config
+# (build/start/env vars).
 services:
   - type: web
-    name: kalai.setteria
+    name: kalai-setteria
     runtime: node
     plan: free
     buildCommand: npm install && npm run build

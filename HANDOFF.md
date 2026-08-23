@@ -10,6 +10,21 @@ no lleva contenido ni credenciales de ningún cliente precargadas. El piloto
 (Pablo Rojo / Enformix) es solo el primer cliente de prueba, no la base del
 producto.
 
+## Estado actual (2026-08-23, actualización 2)
+- **Migración completa a URL limpia**: se recreó el servicio desde cero en
+  Render (mismo procedimiento que Convivo el mismo día): se renombró el
+  servicio viejo a `kalai-setteria-old` para liberar el nombre, se creó
+  `kalai-setteria` desde el mismo repo/rama con las mismas variables de
+  entorno (`ADMIN_BEARER_TOKEN`, `CLAUDE_MODEL`,
+  `CREDENTIALS_ENCRYPTION_KEY`, `DATABASE_URL`, `PORT`), y se verificó que
+  funciona (login, estilos, todo correcto) antes de dejarlo como definitivo.
+  **Nueva URL de producción: https://kalai-setteria.onrender.com** — ya sin
+  ninguna referencia a "Altiora". El panel real vive en la raíz `/` (no en
+  `/admin` — esa ruta está reservada para los endpoints de API con token,
+  visitarla directamente da "No autorizado"). `kalai-setteria-old` sigue
+  existiendo en Render sin tráfico; Rita lo borrará cuando quiera desde el
+  panel (es una acción irreversible, no se automatiza).
+
 ## Estado actual (2026-08-23)
 - **Rebrand Altiora → Kalai en curso**: el producto pasa a llamarse "Setteria"
   (dentro de la empresa "Kalai"). El repo de GitHub ya se renombró a
