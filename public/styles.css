@@ -1,28 +1,28 @@
 [hidden] { display: none !important; }
 
 :root {
-  --bg: #0d0c0b;
-  --bg-elevated: #17130f;
-  --bg-subtle: #221c16;
-  --border: #332c22;
-  --text: #f5f1ea;
-  --text-muted: #a89f92;
-  --accent: #e8623a;
-  --accent-strong: #e8623a;
-  --accent-on: #1a0d07;
-  --accent-soft: rgba(232, 98, 58, 0.16);
+  --bg: #1b1b19;
+  --bg-elevated: #252523;
+  --bg-subtle: #31312f;
+  --border: #44443f;
+  --text: #f8f6f3;
+  --text-muted: #a8a59f;
+  --accent: #f8f6f3;
+  --accent-strong: #ffffff;
+  --accent-on: #252523;
+  --accent-soft: rgba(248, 246, 243, 0.12);
   --success: #8bb17a;
   --danger: #b0644a;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   --radius: 10px;
 
-  --wa-wallpaper: #0d0c0b;
-  --wa-header-bg: #17130f;
-  --wa-out-bubble: #e8623a;
-  --wa-out-text: #1a0d07;
-  --wa-in-bubble: #221c16;
-  --wa-in-text: #f5f1ea;
-  --wa-meta: #a89f92;
+  --wa-wallpaper: #1b1b19;
+  --wa-header-bg: #252523;
+  --wa-out-bubble: #f8f6f3;
+  --wa-out-text: #252523;
+  --wa-in-bubble: #31312f;
+  --wa-in-text: #f8f6f3;
+  --wa-meta: #a8a59f;
 
   --font-display: "Barlow Condensed", system-ui, sans-serif;
   --font-body: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
